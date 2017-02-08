@@ -1,8 +1,38 @@
+## Deployment
+
+deploy:
+  # Deploy standalone archives to GitHub releases.
+  - provider: releases
+    api_key:
+      secure: QeXqTUALYnbyG3FYH38KFNWcpcmHd1GbQGzYXJNOPrjJho2UGcTyx4/HF+fvAYY3JZWqzj4W3/0O4fPJjAM+qVxf4Sym6kjHs7zoCwhedpTGun+rSVrZVxfQfx/ToS/IDzFkLqaFt3hiHdZUo7T7BNrP0nCX+iwDyi3957Mkg5GzuhJDVD1R5PC5RZqdwVLolsngvCauAsEhyrIO5IcALZSXASdvaw53QPbz8VGhtQnCf29fsClxQtMkc0iY/sXDwoyTRG/kFdZP59+zUgq5eupdsc2JlZekP1q6WoGsrSMDLibTdPzeRDsfyuSRvz/ptqf4DyIuSe3IASSn4ZaU8zCfAjNnOVKY6PBKkoADRlkUvQeoABmkTIcYUQcI5gI3iwweEmvCOCtCJW57DUhZK5+icV1raksWnLUJ7yuaoQxSeGjfjO7e8Lk80GsFkOoVTmZny6PNHoZlHgnK8oI2KSb41C5KpFflRJDRyGdnxTK1pf+VW5i/UTOrnoZv5Rwpafa+dB/flBN9zdIULy0Tz3ySC1rfzYzplfSxSVWlcQ/eqmeblj+kTyLd/H3dk1zGGDHCECi+IIxiB4Wgv1Hhyd3FS1iZOzzUgnvI/JLkFsaYj61mDoAYO15hmJ8l8pCz5SpiKokF+ieilCO4loRoRgWv3apUVtVfR6ucNEVWhQ8=
+    file: "${files_for_github}"
+    skip_cleanup: true
+    on: &deploy_on
+      repo: sass/dart-sass
+      condition: $DEPLOYABLE = true
+      tags: true
+
+  # Deploy to npm and pub.
+  - provider: script
+    script: tool/deploy.sh
+    on: *deploy_on
+
+before_deploy:
+- rm -rf build/
+- pub run grinder package npm_package
+- export files_for_github=$(ls build/dart-sass-*)
+
+## Testing
+
 # Set the language to Ruby so that we can run sass-spec tests.
 language: ruby
 env:
-# Language specs, defined in sass/sass-spec
-- TASK=specs   DART_VERSION=latest
+# Language specs, defined in sass/sass-spec.
+#
+# Until travis-ci/travis-ci#929 is fixed, the first specs task is responsible
+# for building the artifacts to be deployed when the deployment conditions are
+# met.
+- TASK=specs   DART_VERSION=latest DEPLOYABLE=true
 - TASK=specs   DART_VERSION=1.20.1
 - TASK=specs   DART_VERSION=1.19.1
 
